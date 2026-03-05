@@ -1,1 +1,1 @@
-# cash-crop-App
+# Cash Crop App\n\nWelcome to the Cash Crop App monorepo! This repository contains multiple modules to manage cash crops efficiently.\n\n## Getting Started\n\n1. Clone the repository:  `git clone https://github.com/Espoirmbeng/cash-crop-app.git`\n2. Navigate to the desired module and follow the setup instructions.\n3. Please check the [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute!\n\n## License\n\nThis project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
