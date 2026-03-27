@@ -1,0 +1,1 @@
+// AgriculNet — OrderCard.jsx — placeholder

@@ -1,0 +1,1 @@
+// AgriculNet — EmptyState.jsx — placeholder

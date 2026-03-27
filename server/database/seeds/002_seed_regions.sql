@@ -1,0 +1,1 @@
+-- AgriculNet — 002_seed_regions.sql — placeholder

@@ -1,0 +1,1 @@
+-- AgriculNet — 008_inquiries.sql — placeholder

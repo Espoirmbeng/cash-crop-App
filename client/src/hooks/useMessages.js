@@ -1,0 +1,1 @@
+// AgriculNet — useMessages.js — placeholder

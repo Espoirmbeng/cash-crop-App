@@ -1,0 +1,1 @@
+-- AgriculNet — 012_inspections.sql — placeholder

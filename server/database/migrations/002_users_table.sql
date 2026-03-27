@@ -1,0 +1,46 @@
+-- AgriculNet — Core users table
+-- Shared identity table for all roles
+
+CREATE TABLE IF NOT EXISTS users (
+  id                    UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  role                  user_role NOT NULL,
+  status                user_status NOT NULL DEFAULT 'pending_verification',
+
+  first_name            VARCHAR(100) NOT NULL,
+  last_name             VARCHAR(100) NOT NULL,
+  phone                 VARCHAR(20) UNIQUE,
+  email                 CITEXT UNIQUE,
+
+  password_hash         VARCHAR(255),
+  phone_verified        BOOLEAN NOT NULL DEFAULT FALSE,
+  email_verified        BOOLEAN NOT NULL DEFAULT FALSE,
+
+  region                VARCHAR(100),
+  city                  VARCHAR(100),
+  country               VARCHAR(100) NOT NULL DEFAULT 'Cameroon',
+
+  last_login_at         TIMESTAMPTZ,
+  login_count           INTEGER NOT NULL DEFAULT 0,
+  failed_login_attempts INTEGER NOT NULL DEFAULT 0,
+  locked_until          TIMESTAMPTZ,
+
+  created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_phone  ON users(phone);
+CREATE INDEX IF NOT EXISTS idx_users_email  ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_role   ON users(role);
+CREATE INDEX IF NOT EXISTS idx_users_status ON users(status);
+
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER users_updated_at
+  BEFORE UPDATE ON users
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

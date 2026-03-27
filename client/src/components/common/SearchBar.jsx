@@ -1,0 +1,1 @@
+// AgriculNet — SearchBar.jsx — placeholder

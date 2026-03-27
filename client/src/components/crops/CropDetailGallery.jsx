@@ -1,0 +1,1 @@
+// AgriculNet — CropDetailGallery.jsx — placeholder

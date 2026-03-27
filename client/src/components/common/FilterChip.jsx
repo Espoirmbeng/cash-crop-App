@@ -1,0 +1,1 @@
+// AgriculNet — FilterChip.jsx — placeholder

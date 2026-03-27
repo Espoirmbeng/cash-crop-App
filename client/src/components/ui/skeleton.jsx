@@ -1,0 +1,1 @@
+// AgriculNet — skeleton.jsx — placeholder

@@ -1,0 +1,1 @@
+// AgriculNet — CropBadge.jsx — placeholder

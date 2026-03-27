@@ -1,0 +1,1 @@
+// AgriculNet — checkbox.jsx — placeholder

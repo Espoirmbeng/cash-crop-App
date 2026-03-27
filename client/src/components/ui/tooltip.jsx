@@ -1,0 +1,1 @@
+// AgriculNet — tooltip.jsx — placeholder

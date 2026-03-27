@@ -1,0 +1,1 @@
+// AgriculNet — VerificationBadge.jsx — placeholder

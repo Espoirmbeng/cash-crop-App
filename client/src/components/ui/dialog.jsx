@@ -1,0 +1,1 @@
+// AgriculNet — dialog.jsx — placeholder

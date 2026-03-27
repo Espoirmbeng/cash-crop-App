@@ -1,0 +1,90 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --green-900: #0D3D22;
+    --green-800: #1A6B3C;
+    --green-700: #2E8B57;
+    --green-100: #D4EDDA;
+    --green-50: #EAF4EE;
+    --gold-800: #8A6200;
+    --gold-700: #B5892A;
+    --gold-400: #E8B84B;
+    --gold-100: #F7EDD5;
+    --gold-50: #FDF8EE;
+    --neutral-900: #111827;
+    --neutral-700: #374151;
+    --neutral-500: #6B7280;
+    --neutral-300: #D1D5DB;
+    --neutral-100: #F3F4F6;
+    --neutral-50: #F9FAFB;
+    --line: #E5E7EB;
+    --white: #FFFFFF;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    background: var(--neutral-50);
+    color: var(--neutral-900);
+    font-family: var(--font-sans), sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display), serif;
+  }
+
+  .font-sans {
+    font-family: var(--font-sans), sans-serif;
+  }
+
+  .content-shell {
+    @apply mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-[40px];
+  }
+
+  .surface-card {
+    @apply rounded-[14px] border border-[#E5E7EB] bg-white;
+  }
+
+  .interactive-card {
+    @apply transition-all duration-200 hover:-translate-y-[2px] hover:border-[#1A6B3C] hover:shadow-[0_4px_20px_rgba(26,107,60,0.15)];
+  }
+
+  .section-eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6B7280];
+  }
+
+  .section-title {
+    @apply font-display text-[18px] leading-[1.2] text-[#111827];
+  }
+
+  .body-copy {
+    @apply text-[14px] leading-6 text-[#374151];
+  }
+}

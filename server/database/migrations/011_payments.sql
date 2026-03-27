@@ -1,0 +1,1 @@
+-- AgriculNet — 011_payments.sql — placeholder

@@ -1,0 +1,1 @@
+// AgriculNet — FarmerSidebar.jsx — placeholder

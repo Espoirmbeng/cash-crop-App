@@ -1,0 +1,1 @@
+// AgriculNet — textarea.jsx — placeholder

@@ -1,0 +1,1 @@
+// AgriculNet — OrderStatusBadge.jsx — placeholder

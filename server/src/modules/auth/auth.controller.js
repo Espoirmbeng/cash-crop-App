@@ -1,0 +1,103 @@
+const asyncHandler = require('../../utils/asyncHandler');
+const { sendSuccess } = require('../../utils/response');
+const authService = require('./auth.service');
+
+const registerFarmer = asyncHandler(async (req, res) => {
+  const result = await authService.registerFarmer(req.body, req);
+  sendSuccess(res, result, 'Farmer registered successfully', 201);
+});
+
+const registerBuyer = asyncHandler(async (req, res) => {
+  const result = await authService.registerBuyer(req.body, req);
+  sendSuccess(res, result, 'Buyer registered successfully', 201);
+});
+
+const login = asyncHandler(async (req, res) => {
+  const { identifier, password, rememberMe } = req.body;
+  const result = await authService.login(identifier, password, rememberMe, req);
+  sendSuccess(res, result, 'Login successful');
+});
+
+const logout = asyncHandler(async (req, res) => {
+  const { refreshToken } = req.body;
+  await authService.logout(req.user.id, refreshToken, req);
+  sendSuccess(res, null, 'Logout successful');
+});
+
+const refreshToken = asyncHandler(async (req, res) => {
+  const { refreshToken } = req.body;
+  const result = await authService.refreshAccessToken(refreshToken);
+  sendSuccess(res, result, 'Token refreshed successfully');
+});
+
+const verifyEmail = asyncHandler(async (req, res) => {
+  const { token } = req.body;
+  const result = await authService.verifyEmail(token, req);
+  sendSuccess(res, result, 'Email verified successfully');
+});
+
+const sendPhoneOtp = asyncHandler(async (req, res) => {
+  const { phone, userId, purpose } = req.body;
+  const result = await authService.sendPhoneOtp(phone, userId, purpose, req);
+  sendSuccess(res, result, 'OTP sent successfully');
+});
+
+const confirmPhoneOtp = asyncHandler(async (req, res) => {
+  const { userId, otp } = req.body;
+  const result = await authService.confirmPhoneOtp(userId, otp, req);
+  sendSuccess(res, result, 'Phone verified successfully');
+});
+
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { identifier, method } = req.body;
+  const result = await authService.forgotPassword(identifier, method, req);
+  sendSuccess(res, result, 'Password reset requested');
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+  const { userId, newPassword, token, otp } = req.body;
+  const result = await authService.resetPassword(userId, newPassword, token, otp, req);
+  sendSuccess(res, result, 'Password reset successfully');
+});
+
+const resendVerification = asyncHandler(async (req, res) => {
+  const { userId, type } = req.body;
+  let result;
+  if (type === 'phone') {
+    result = await authService.sendPhoneOtp(null, userId, 'phone_verification', req);
+  }
+  sendSuccess(res, result, 'Verification resent successfully');
+});
+
+const getMe = asyncHandler(async (req, res) => {
+  const result = await authService.getMe(req.user.id);
+  sendSuccess(res, result, 'Profile retrieved successfully');
+});
+
+const updateMe = asyncHandler(async (req, res) => {
+  const result = await authService.updateMe(req.user.id, req.body);
+  sendSuccess(res, result, 'Profile updated successfully');
+});
+
+const deactivateAccount = asyncHandler(async (req, res) => {
+  const { password } = req.body;
+  const result = await authService.deactivateAccount(req.user.id, password, req);
+  sendSuccess(res, result, 'Account deactivated successfully');
+});
+
+module.exports = {
+  registerFarmer,
+  registerBuyer,
+  login,
+  logout,
+  refreshToken,
+  verifyEmail,
+  sendPhoneOtp,
+  confirmPhoneOtp,
+  forgotPassword,
+  resetPassword,
+  resendVerification,
+  getMe,
+  updateMe,
+  deactivateAccount
+};

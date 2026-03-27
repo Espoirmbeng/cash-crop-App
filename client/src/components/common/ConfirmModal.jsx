@@ -1,0 +1,1 @@
+// AgriculNet — ConfirmModal.jsx — placeholder

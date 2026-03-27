@@ -1,0 +1,1 @@
+-- AgriculNet — 006_listings.sql — placeholder

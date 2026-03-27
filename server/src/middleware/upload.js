@@ -1,0 +1,1 @@
+// AgriculNet — upload.js — placeholder

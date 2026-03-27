@@ -1,0 +1,1 @@
+// AgriculNet — cloudinary.js — placeholder

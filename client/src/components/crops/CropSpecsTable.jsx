@@ -1,0 +1,1 @@
+// AgriculNet — CropSpecsTable.jsx — placeholder

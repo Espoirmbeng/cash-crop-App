@@ -1,0 +1,1 @@
+// AgriculNet — ChatInput.jsx — placeholder

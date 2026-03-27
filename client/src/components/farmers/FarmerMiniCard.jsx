@@ -1,0 +1,1 @@
+// AgriculNet — FarmerMiniCard.jsx — placeholder

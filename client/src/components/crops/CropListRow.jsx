@@ -1,0 +1,1 @@
+// AgriculNet — CropListRow.jsx — placeholder

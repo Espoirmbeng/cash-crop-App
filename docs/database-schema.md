@@ -1,0 +1,1 @@
+# AgriculNet — database-schema.md

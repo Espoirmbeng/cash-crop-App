@@ -1,0 +1,1 @@
+// AgriculNet — CropImageZone.jsx — placeholder

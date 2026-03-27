@@ -1,0 +1,1 @@
+// AgriculNet — usePayments.js — placeholder

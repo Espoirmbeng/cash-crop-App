@@ -1,0 +1,1 @@
+// AgriculNet — KpiCard.jsx — placeholder

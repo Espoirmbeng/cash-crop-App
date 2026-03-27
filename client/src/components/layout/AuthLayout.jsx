@@ -1,0 +1,70 @@
+﻿"use client";
+
+import { usePathname } from "next/navigation";
+import { BrandPanel } from "../auth/BrandPanel";
+
+const panelContent = {
+  "/sign-in": {
+    eyebrow: "Sign In",
+    title: "Trade verified crops with confidence.",
+    subtitle: "Continue with your preferred sign-in method and get back to sourcing, selling, and tracking orders.",
+  },
+  "/register": {
+    eyebrow: "Get Started",
+    title: "Choose the account that fits your trade flow.",
+    subtitle: "Set up a farmer or buyer profile with the same clear, protected onboarding pattern used across AgriculNet.",
+  },
+  "/register/farmer": {
+    eyebrow: "Farmer Registration",
+    title: "Bring your farm to verified market access.",
+    subtitle: "Share your profile, crop readiness, and payout details so buyers can source from you with trust.",
+  },
+  "/register/buyer": {
+    eyebrow: "Buyer Registration",
+    title: "Source from Cameroon with better visibility.",
+    subtitle: "Set up your buyer account for local procurement or international trade and keep every step documented.",
+  },
+  "/forgot-password": {
+    eyebrow: "Recovery",
+    title: "Secure access starts with a clean reset flow.",
+    subtitle: "Choose phone or email recovery and we will mock the delivery path until backend services are connected.",
+  },
+  "/reset-password": {
+    eyebrow: "Password Reset",
+    title: "Set a stronger password before your next transaction.",
+    subtitle: "Use the reset code you received and update the credentials that protect your account activity and payouts.",
+  },
+  "/verify-email": {
+    eyebrow: "Email Verification",
+    title: "Confirm your email to unlock the next step.",
+    subtitle: "Verification keeps notifications, order updates, and buyer communication tied to a trusted inbox.",
+  },
+  "/verify-phone": {
+    eyebrow: "Phone Verification",
+    title: "Verify your phone for alerts and payout readiness.",
+    subtitle: "Your mobile number powers order notifications, buyer updates, and MTN MoMo or Orange Money workflows.",
+  },
+  "/pending": {
+    eyebrow: "Review Status",
+    title: "Your account is under review.",
+    subtitle: "We are checking profile details, trade readiness, and payout information before approval.",
+  },
+};
+
+export function AuthLayout({ children }) {
+  const pathname = usePathname();
+  const content = panelContent[pathname] || panelContent["/sign-in"];
+
+  return (
+    <div className="min-h-screen bg-[#F3F4F6] py-4 lg:py-8">
+      <div className="content-shell">
+        <div className="overflow-hidden rounded-[20px] border border-[#E5E7EB] bg-white lg:grid lg:min-h-[calc(100vh-64px)] lg:grid-cols-[0.92fr_1.08fr]">
+          <BrandPanel {...content} />
+          <div className="flex items-center justify-center px-4 py-6 sm:px-6 lg:px-12 lg:py-10">
+            <div className="w-full max-w-[560px]">{children}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

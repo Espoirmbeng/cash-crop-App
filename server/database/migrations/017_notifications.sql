@@ -1,0 +1,1 @@
+-- AgriculNet — 017_notifications.sql — placeholder

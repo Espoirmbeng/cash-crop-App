@@ -1,0 +1,1 @@
+// AgriculNet — useFilters.js — placeholder

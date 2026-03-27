@@ -1,0 +1,1 @@
+// AgriculNet — FarmerAvatar.jsx — placeholder

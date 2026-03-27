@@ -1,0 +1,1 @@
+// AgriculNet — uiStore.js — placeholder

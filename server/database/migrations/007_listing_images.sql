@@ -1,0 +1,1 @@
+-- AgriculNet — 007_listing_images.sql — placeholder

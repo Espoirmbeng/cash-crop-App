@@ -1,0 +1,1 @@
+// AgriculNet — cartStore.js — placeholder

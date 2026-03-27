@@ -1,0 +1,1 @@
+// AgriculNet — queryClient.js — placeholder
