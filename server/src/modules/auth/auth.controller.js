@@ -55,17 +55,13 @@ const forgotPassword = asyncHandler(async (req, res) => {
 });
 
 const resetPassword = asyncHandler(async (req, res) => {
-  const { userId, newPassword, token, otp } = req.body;
-  const result = await authService.resetPassword(userId, newPassword, token, otp, req);
+  const result = await authService.resetPassword(req.body, req);
   sendSuccess(res, result, 'Password reset successfully');
 });
 
 const resendVerification = asyncHandler(async (req, res) => {
   const { userId, type } = req.body;
-  let result;
-  if (type === 'phone') {
-    result = await authService.sendPhoneOtp(null, userId, 'phone_verification', req);
-  }
+  const result = await authService.resendVerification(userId, type || 'phone', req);
   sendSuccess(res, result, 'Verification resent successfully');
 });
 

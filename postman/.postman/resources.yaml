@@ -1,0 +1,9 @@
+# Use this workspace to collaborate
+workspace:
+  id: 7a6d0a0c-968a-4f92-8f8f-523b5c60c697
+
+localResources:
+  collections:
+    - ..\agriculnet_auth.postman_collection.json
+  environments:
+    - ..\agriculnet.postman_environment.json

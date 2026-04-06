@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS farmer_profiles (
   UNIQUE(user_id)
 );
 
+DROP TRIGGER IF EXISTS farmer_profiles_updated_at ON farmer_profiles;
+
 CREATE TRIGGER farmer_profiles_updated_at
   BEFORE UPDATE ON farmer_profiles
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

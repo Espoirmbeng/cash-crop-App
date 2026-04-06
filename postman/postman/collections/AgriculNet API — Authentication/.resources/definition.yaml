@@ -1,0 +1,18 @@
+$kind: collection
+name: 'AgriculNet API — Authentication'
+description: Complete API collection for AgriculNet authentication endpoints
+variables:
+  - key: base_url
+    value: 'http://localhost:5000'
+  - key: api_version
+    value: v1
+  - key: access_token
+    value: ''
+  - key: refresh_token
+    value: ''
+  - key: farmer_id
+    value: ''
+  - key: buyer_id
+    value: ''
+  - key: admin_key
+    value: agriculnet-admin-secret-2025

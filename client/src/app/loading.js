@@ -1,1 +1,5 @@
-// AgriculNet — loading.js — placeholder
+import { LoadingSpinner } from "../components/common/LoadingSpinner";
+
+export default function Loading() {
+  return <LoadingSpinner fullScreen label="Preparing AgriculNet" />;
+}

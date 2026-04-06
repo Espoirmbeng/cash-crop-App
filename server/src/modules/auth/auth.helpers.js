@@ -1,3 +1,5 @@
+const { USER_ROLES, USER_STATUS } = require('../../config/constants');
+
 const normalizePhone = (phone) => {
   const cleaned = phone.replace(/[\s\-]/g, '');
   if (!cleaned.startsWith('+')) {
@@ -29,16 +31,51 @@ const maskEmail = (email) => {
   return maskedLocal + '@' + domain;
 };
 
+const splitContactName = (contactName = '') => {
+  const [firstName = '', ...rest] = contactName.trim().split(/\s+/).filter(Boolean);
+  return {
+    firstName,
+    lastName: rest.join(' ') || 'Buyer'
+  };
+};
+
+const toCropList = (value) => {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter(Boolean);
+  }
+
+  if (typeof value === 'string') {
+    return value
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+};
+
 const shouldAdvanceToActive = (user) => {
   return (
-    (user.role === 'local_buyer' || user.role === 'international_buyer') &&
+    (user.role === USER_ROLES.LOCAL_BUYER || user.role === USER_ROLES.INTERNATIONAL_BUYER) &&
     user.phone_verified &&
     user.email_verified
   );
 };
 
 const shouldAdvanceToPendingReview = (user) => {
-  return user.role === 'farmer' && user.phone_verified && user.email_verified;
+  return user.role === USER_ROLES.FARMER && user.phone_verified && user.email_verified;
+};
+
+const getNextStatus = (user) => {
+  if (shouldAdvanceToActive(user)) {
+    return USER_STATUS.ACTIVE;
+  }
+
+  if (shouldAdvanceToPendingReview(user)) {
+    return USER_STATUS.PENDING_REVIEW;
+  }
+
+  return user.status || USER_STATUS.PENDING_VERIFICATION;
 };
 
 const sanitizeUser = (user) => {
@@ -52,7 +89,10 @@ module.exports = {
   isEmail,
   maskPhone,
   maskEmail,
+  splitContactName,
+  toCropList,
   shouldAdvanceToActive,
   shouldAdvanceToPendingReview,
+  getNextStatus,
   sanitizeUser
 };

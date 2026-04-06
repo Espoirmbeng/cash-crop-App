@@ -1,6 +1,7 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,13 +12,30 @@ import { Label } from "../../../components/ui/label";
 import { PhoneInput } from "../../../components/auth/PhoneInput";
 import { PasswordInput } from "../../../components/auth/PasswordInput";
 import { RoleSwitcher } from "../../../components/auth/RoleSwitcher";
-import { mockAuthRequest } from "../../../lib/axios";
 import { signInSchema } from "../../../lib/validators";
+import useAuthStore from "../../../store/authStore";
+
+const getDashboardRoute = (user, nextStep) => {
+  if (nextStep === "pending_review" || user?.status === "pending_review") {
+    return "/pending";
+  }
+
+  switch (user?.role) {
+    case "farmer":
+      return "/farmer/dashboard";
+    case "local_buyer":
+    case "international_buyer":
+      return "/buyer/dashboard";
+    default:
+      return "/";
+  }
+};
 
 export default function SignInPage() {
+  const router = useRouter();
+  const { login } = useAuthStore();
   const [mode, setMode] = useState("phone");
   const [submitError, setSubmitError] = useState("");
-  const [submitSuccess, setSubmitSuccess] = useState("");
   const {
     register,
     handleSubmit,
@@ -37,14 +55,21 @@ export default function SignInPage() {
 
   const onSubmit = async (values) => {
     setSubmitError("");
-    setSubmitSuccess("");
 
-    try {
-      await mockAuthRequest(values);
-      setSubmitSuccess("Mock sign-in complete. Backend wiring can be attached later.");
-    } catch (error) {
-      setSubmitError(error.message);
+    const identifier = values.mode === "phone" ? values.phone : values.email;
+    const result = await login(identifier, values.password);
+
+    if (!result.success) {
+      if (result.errorCode === "PHONE_NOT_VERIFIED") {
+        router.push("/verify-phone");
+        return;
+      }
+
+      setSubmitError(result.error);
+      return;
     }
+
+    router.push(getDashboardRoute(result.data.user, result.data.nextStep));
   };
 
   return (
@@ -80,7 +105,7 @@ export default function SignInPage() {
           <PhoneInput
             label="Phone Number"
             value={watch("phone")}
-            onChange={(nextPhone) => setValue("phone", nextPhone.replace(/\s/g, ""), { shouldValidate: true })}
+            onChange={(nextPhone) => setValue("phone", nextPhone, { shouldValidate: true })}
             error={errors.phone?.message}
           />
         ) : (
@@ -97,13 +122,10 @@ export default function SignInPage() {
           <Link href="/forgot-password" className="font-semibold text-[#1A6B3C] hover:text-[#2E8B57]">
             Forgot your password?
           </Link>
-          <button type="button" className="font-medium text-[#6B7280] hover:text-[#1A6B3C]">
-            Sign in with OTP
-          </button>
+          <span className="text-[#6B7280]">Phone verification resumes automatically if needed.</span>
         </div>
 
         {submitError ? <p className="rounded-[12px] bg-[#FDECEA] px-4 py-3 text-[12px] text-[#922B21]">{submitError}</p> : null}
-        {submitSuccess ? <p className="rounded-[12px] bg-[#D4EDDA] px-4 py-3 text-[12px] text-[#1A5C2E]">{submitSuccess}</p> : null}
 
         <Button type="submit" className="w-full" disabled={!isValid || isSubmitting}>
           {isSubmitting ? "Signing In..." : "Sign In"}

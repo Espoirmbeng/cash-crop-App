@@ -1,88 +1,79 @@
 # AgriculNet Setup Guide
 
 ## Prerequisites
-- Node.js v20+
-- npm v9+
-- Git
-- Postman (for API testing)
-- Supabase account (free tier works)
+- Node.js 20+
+- npm
+- Supabase project access
 
-## 1. Clone Repository
+## 1. Install Dependencies
 ```bash
-git clone https://github.com/your-org/cash-crop-App.git
-cd cash-crop-App
+cd client
+cmd /c npm install
+
+cd ../server
+cmd /c npm install
 ```
 
-## 2. Configure Backend
+## 2. Configure Environment Files
 ```bash
+copy server\\.env.example server\\.env
+copy client\\.env.local.example client\\.env.local
+```
+
+### Backend notes
+- `SUPABASE_URL` and `SUPABASE_ANON_KEY` must be valid
+- `SUPABASE_SERVICE_ROLE_KEY` should be set for full backend write access
+- In development, the server can boot without SMTP, SMS, or Cloudinary credentials
+- Development auth hints are controlled by:
+  - `ALLOW_DEV_DELIVERY_FALLBACK=true`
+  - `EXPOSE_DEV_AUTH_HINTS=true`
+
+## 3. Run Supabase SQL Migrations
+Run the files in `server/database/migrations/` in order from the Supabase SQL editor.
+
+Important auth-related files:
+- `001_enums_and_extensions.sql`
+- `002_users_table.sql`
+- `003_farmer_profiles.sql`
+- `004_buyer_profiles.sql`
+- `005_tokens_and_otps.sql`
+- `021_audit_logs.sql`
+- `022_profile_extensions.sql`
+
+Then run:
+- `server/database/seeds/001_seed_admin.sql`
+
+## 4. Start Local Servers
+```bash
+# API
 cd server
-cp .env.example .env
-# Edit .env with your credentials
-npm install
-```
+cmd /c npm start
 
-### Required environment variables in server/.env:
-- `SUPABASE_URL` - From https://app.supabase.com → Project Settings → API
-- `SUPABASE_ANON_KEY` - From Supabase dashboard
-- `SUPABASE_SERVICE_ROLE_KEY` - From Supabase dashboard
-- `JWT_ACCESS_SECRET` - Generate with: `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"`
-- `JWT_REFRESH_SECRET` - Generate another secret
-- `SMTP_USER` - Gmail address
-- `SMTP_PASS` - Gmail App Password
-- `AT_API_KEY` - Africa's Talking API key
-- `AT_USERNAME` - Africa's Talking username
-
-## 3. Configure Frontend
-```bash
+# Frontend
 cd ../client
-cp .env.local.example .env.local
-# Edit .env.local with your credentials
-npm install
+cmd /c npm start
 ```
 
-## 4. Set Up Supabase Database
-1. Create project at https://app.supabase.com
-2. Go to SQL Editor
-3. Run migrations IN ORDER:
-   - `001_enums_and_extensions.sql`
-   - `002_users_table.sql`
-   - `003_farmer_profiles.sql`
-   - `004_buyer_profiles.sql`
-   - `005_tokens_and_otps.sql`
-   - `021_audit_logs.sql`
-4. Run seed: `001_seed_admin.sql`
+## 5. Local URLs
+- Frontend: `http://localhost:3000`
+- API health: `http://localhost:5000/api/health`
+- Admin portal: `http://localhost:3000/admin-portal`
 
-## 5. Run Development Servers
-```bash
-# Terminal 1 - Backend
-cd server && npm run dev
-# → http://localhost:5000
+## 6. What Is Real vs Demo
+- Real backend: `auth`, `admin-auth`
+- Demo-backed frontend areas: buyer workspace, farmer workspace, admin operations, public marketplace content outside auth
 
-# Terminal 2 - Frontend
-cd client && npm run dev
-# → http://localhost:3000
-```
+## 7. Local Auth Testing
+In development, registration, verification, forgot-password, and reset-password flows can surface browser-visible `devHints` when SMTP or SMS providers are not configured.
 
-## 6. Test API
-1. Open Postman
-2. Import: `postman/agriculnet_auth.postman_collection.json`
-3. Import: `postman/agriculnet.postman_environment.json`
-4. Select "AgriculNet Local" environment
-5. Run requests from top to bottom
+Typical local flow:
+1. Register a buyer or farmer
+2. Use the OTP shown in `devHints` on `/verify-phone`
+3. Use the verification link shown in `devHints` on `/verify-email`
+4. Sign in normally
 
-## 7. Default Admin Credentials
-- **Email:** admin@agriculnet.cm
-- **Password:** Admin@AgriculNet2025!
-- **Login URL:** http://localhost:3000/admin-portal
-
-**IMPORTANT:** Change this password immediately after first login!
-
-## Supabase Project Info
-- **Project URL:** https://jftggxxzqtmmqktvnlwc.supabase.co
-- **Region:** eu-west-1
-- **Status:** ACTIVE_HEALTHY
-
-## Troubleshooting
-- If npm install fails on Windows, use `cmd.exe /c npm install`
-- If JWT secrets are missing, the server will refuse to start
-- Check server logs in `server/logs/` directory
+## 8. Troubleshooting
+- If `npm install` is slow on Windows, use `cmd /c npm install` and allow enough time for the client install to finish.
+- If registration fails with missing profile columns, apply `022_profile_extensions.sql`.
+- If the API starts but auth writes fail, verify that `SUPABASE_SERVICE_ROLE_KEY` is valid.
+- Check `server/logs/error.log` for backend runtime failures.

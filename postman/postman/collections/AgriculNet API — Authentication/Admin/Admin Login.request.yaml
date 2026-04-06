@@ -1,0 +1,23 @@
+$kind: http-request
+method: POST
+url: '{{base_url}}/api/v1/x-secure/admin-access/authenticate'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+  - key: x-admin-key
+    value: '{{admin_key}}'
+body:
+  type: json
+  content: |-
+    {
+      "identifier": "admin@agriculnet.cm",
+      "password": "Admin@AgriculNet2025!"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 200', () => pm.response.to.have.status(200));
+      const role = pm.response.json().data?.user?.role;
+      pm.expect(role).to.be.oneOf(['admin', 'super_admin']);
+    language: text/javascript

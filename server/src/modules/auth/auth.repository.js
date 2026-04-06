@@ -1,4 +1,62 @@
 const { supabaseAdmin } = require('../../config/supabase');
+const helpers = require('./auth.helpers');
+
+const getMissingColumnName = (error) => {
+  const message = error?.message || error?.details || '';
+  const match = message.match(/Could not find the '([^']+)' column/);
+  return match ? match[1] : null;
+};
+
+const insertWithMissingColumnFallback = async (table, payload) => {
+  let candidate = { ...payload };
+  const skippedColumns = new Set();
+
+  while (true) {
+    const { data, error } = await supabaseAdmin
+      .from(table)
+      .insert(candidate)
+      .select()
+      .single();
+
+    if (!error) {
+      return data;
+    }
+
+    const missingColumn = getMissingColumnName(error);
+    if (!missingColumn || skippedColumns.has(missingColumn)) {
+      throw error;
+    }
+
+    skippedColumns.add(missingColumn);
+    delete candidate[missingColumn];
+  }
+};
+
+const updateWithMissingColumnFallback = async (table, userId, payload) => {
+  let candidate = { ...payload };
+  const skippedColumns = new Set();
+
+  while (true) {
+    const { data, error } = await supabaseAdmin
+      .from(table)
+      .update(candidate)
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (!error) {
+      return data;
+    }
+
+    const missingColumn = getMissingColumnName(error);
+    if (!missingColumn || skippedColumns.has(missingColumn)) {
+      throw error;
+    }
+
+    skippedColumns.add(missingColumn);
+    delete candidate[missingColumn];
+  }
+};
 
 const findUserByPhone = async (phone) => {
   const { data, error } = await supabaseAdmin
@@ -31,11 +89,15 @@ const findUserById = async (id) => {
 };
 
 const findUserByIdentifier = async (identifier) => {
-  const phonePattern = /^\+237[0-9]{9}$/;
-  if (phonePattern.test(identifier)) {
-    return findUserByPhone(identifier);
+  if (!identifier) {
+    return null;
   }
-  return findUserByEmail(identifier);
+
+  if (identifier.includes('@')) {
+    return findUserByEmail(identifier);
+  }
+
+  return findUserByPhone(helpers.normalizePhone(identifier));
 };
 
 const createUser = async (userData) => {
@@ -49,23 +111,11 @@ const createUser = async (userData) => {
 };
 
 const createFarmerProfile = async (userId, profileData) => {
-  const { data, error } = await supabaseAdmin
-    .from('farmer_profiles')
-    .insert({ user_id: userId, ...profileData })
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
+  return insertWithMissingColumnFallback('farmer_profiles', { user_id: userId, ...profileData });
 };
 
 const createBuyerProfile = async (userId, profileData) => {
-  const { data, error } = await supabaseAdmin
-    .from('buyer_profiles')
-    .insert({ user_id: userId, ...profileData })
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
+  return insertWithMissingColumnFallback('buyer_profiles', { user_id: userId, ...profileData });
 };
 
 const updateUser = async (id, updateData) => {
@@ -80,9 +130,10 @@ const updateUser = async (id, updateData) => {
 };
 
 const incrementFailedAttempts = async (id) => {
+  const user = await findUserById(id);
   const { data, error } = await supabaseAdmin
     .from('users')
-    .update({ failed_login_attempts: supabaseAdmin.rpc('increment', { x: 1 }) })
+    .update({ failed_login_attempts: (user?.failed_login_attempts || 0) + 1 })
     .eq('id', id)
     .select()
     .single();
@@ -113,11 +164,12 @@ const lockUserAccount = async (id, lockUntil) => {
 };
 
 const updateLastLogin = async (id) => {
+  const user = await findUserById(id);
   const { data, error } = await supabaseAdmin
     .from('users')
     .update({
       last_login_at: new Date().toISOString(),
-      login_count: supabaseAdmin.rpc('increment', { x: 1 })
+      login_count: (user?.login_count || 0) + 1
     })
     .eq('id', id)
     .select()
@@ -194,7 +246,21 @@ const findLatestOtp = async (userId, purpose) => {
 };
 
 const incrementOtpAttempts = async (otpId) => {
-  const { data, error } = await supabaseAdmin.rpc('increment_otp_attempts', { otp_id: otpId });
+  const { data: otp, error: fetchError } = await supabaseAdmin
+    .from('otps')
+    .select('id, attempts')
+    .eq('id', otpId)
+    .single();
+
+  if (fetchError) throw fetchError;
+
+  const { data, error } = await supabaseAdmin
+    .from('otps')
+    .update({ attempts: (otp?.attempts || 0) + 1 })
+    .eq('id', otpId)
+    .select()
+    .single();
+
   if (error) throw error;
   return data;
 };

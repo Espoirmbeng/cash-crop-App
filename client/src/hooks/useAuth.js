@@ -13,6 +13,10 @@ const useAuth = () => {
   const redirectToDashboard = useCallback(() => {
     if (!store.user) return '/';
 
+    if (store.user.status === 'pending_review') {
+      return '/pending';
+    }
+
     switch (store.user.role) {
       case 'admin':
       case 'super_admin':

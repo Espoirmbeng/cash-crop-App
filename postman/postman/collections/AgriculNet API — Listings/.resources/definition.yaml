@@ -1,0 +1,19 @@
+$kind: collection
+name: 'AgriculNet API — Listings'
+description: >-
+  API collection for AgriculNet crop listings management. Covers creating,
+  reading, updating, and deleting crop listings for farmers and browsing for
+  buyers.
+variables:
+  - key: base_url
+    value: 'http://localhost:5000'
+  - key: api_version
+    value: v1
+  - key: access_token
+    value: ''
+  - key: refresh_token
+    value: ''
+  - key: listing_id
+    value: ''
+  - key: image_id
+    value: ''

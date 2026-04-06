@@ -1,0 +1,22 @@
+$kind: http-request
+method: DELETE
+url: '{{base_url}}/api/{{api_version}}/listings/{{listing_id}}/images/{{image_id}}'
+order: 2000
+description: |-
+  ## Delete Listing Image
+  Deletes an image from a crop listing.
+
+  **Authentication:** Required (Bearer Token)
+  **Roles:** Farmer (own listings only)
+headers:
+  - key: Authorization
+    value: 'Bearer {{access_token}}'
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 200', () => pm.response.to.have.status(200));
+
+      pm.test('Success flag is true', () => {
+          pm.expect(pm.response.json().success).to.be.true;
+      });
+    language: text/javascript

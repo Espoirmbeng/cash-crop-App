@@ -1,18 +1,18 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 
-export function PasswordInput({ label = "Password", error, helper, ...props }) {
+export const PasswordInput = forwardRef(function PasswordInput({ label = "Password", error, helper, ...props }, ref) {
   const [visible, setVisible] = useState(false);
 
   return (
     <div>
       <Label>{label}</Label>
       <div className="relative">
-        <Input {...props} type={visible ? "text" : "password"} className="pr-10" />
+        <Input ref={ref} {...props} type={visible ? "text" : "password"} className="pr-10" />
         <button
           type="button"
           onClick={() => setVisible((current) => !current)}
@@ -25,4 +25,4 @@ export function PasswordInput({ label = "Password", error, helper, ...props }) {
       {error ? <p className="mt-2 text-[12px] text-[#922B21]">{error}</p> : null}
     </div>
   );
-}
+});

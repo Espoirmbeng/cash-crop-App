@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS buyer_profiles (
   UNIQUE(user_id)
 );
 
+DROP TRIGGER IF EXISTS buyer_profiles_updated_at ON buyer_profiles;
+
 CREATE TRIGGER buyer_profiles_updated_at
   BEFORE UPDATE ON buyer_profiles
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

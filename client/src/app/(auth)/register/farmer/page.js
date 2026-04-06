@@ -1,7 +1,7 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,25 +14,27 @@ import { PasswordInput } from "../../../../components/auth/PasswordInput";
 import { PasswordStrength } from "../../../../components/auth/PasswordStrength";
 import { RoleSwitcher } from "../../../../components/auth/RoleSwitcher";
 import { StepIndicator } from "../../../../components/auth/StepIndicator";
-import { mockAuthRequest } from "../../../../lib/axios";
-import { registerFarmerSchemas } from "../../../../lib/validators";
+import { registerFarmerUnifiedSchema } from "../../../../lib/validators";
 import { regions } from "../../../../constants/regions";
+import useAuthStore from "../../../../store/authStore";
 
 const steps = ["Personal", "Farm Details", "Payout Setup"];
 
 export default function RegisterFarmerPage() {
   const router = useRouter();
+  const { registerFarmer } = useAuthStore();
   const [currentStep, setCurrentStep] = useState(0);
-  const [submitState, setSubmitState] = useState({ error: "", success: "" });
-  const resolver = useMemo(() => zodResolver(registerFarmerSchemas[currentStep]), [currentStep]);
+  const [submitState, setSubmitState] = useState({ error: "" });
+  // Use unified schema to prevent data loss between steps
   const {
     register,
     handleSubmit,
     setValue,
     watch,
+    trigger,
     formState: { errors, isSubmitting, isValid },
   } = useForm({
-    resolver,
+    resolver: zodResolver(registerFarmerUnifiedSchema),
     mode: "onChange",
     defaultValues: {
       firstName: "",
@@ -58,20 +60,43 @@ export default function RegisterFarmerPage() {
 
   const password = watch("password");
 
+  // Step-specific field validators
+  const validateStep = async (stepNum, formValues) => {
+    const step1Fields = ["firstName", "lastName", "phone", "region", "city", "acceptedTerms", "password", "confirmPassword"];
+    const step2Fields = ["primaryCrop", "harvestVolume", "cooperative", "inspectionPreference"];
+    const step3Fields = ["payoutMethod", "accountName", "payoutPhone"];
+
+    const fieldsToCheck = [step1Fields, step2Fields, step3Fields][stepNum] || [];
+    
+    // Trigger validation for these fields
+    const result = await Promise.all(
+      fieldsToCheck.map((field) => trigger(field))
+    );
+
+    return result.every((r) => r === true);
+  };
+
   const submitStep = async (values) => {
-    setSubmitState({ error: "", success: "" });
+    setSubmitState({ error: "" });
 
     if (currentStep < steps.length - 1) {
+      // Validate current step before moving to next
+      const isValid = await validateStep(currentStep, values);
+      if (!isValid) {
+        return; // Form validation errors will be shown
+      }
       setCurrentStep((step) => step + 1);
       return;
     }
 
-    try {
-      await mockAuthRequest(values, { delay: 1100 });
-      setSubmitState({ success: "Farmer registration mocked successfully. Connect the backend later.", error: "" });
-    } catch (error) {
-      setSubmitState({ success: "", error: error.message });
+    const result = await registerFarmer(values);
+    if (!result.success) {
+      const detailMessage = result.details?.[0]?.message;
+      setSubmitState({ error: detailMessage || result.error });
+      return;
     }
+
+    router.push("/verify-phone");
   };
 
   return (
@@ -100,7 +125,7 @@ export default function RegisterFarmerPage() {
         <StepIndicator steps={steps} currentStep={currentStep} />
       </div>
 
-      <form className="mt-6 space-y-5" onSubmit={handleSubmit(submitStep)}>
+      <form key={currentStep} className="mt-6 space-y-5" onSubmit={handleSubmit(submitStep)}>
         {currentStep === 0 ? (
           <>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -120,7 +145,7 @@ export default function RegisterFarmerPage() {
               <PhoneInput
                 label="Phone Number *"
                 value={watch("phone")}
-                onChange={(nextPhone) => setValue("phone", nextPhone.replace(/\s/g, ""), { shouldValidate: true })}
+                onChange={(nextPhone) => setValue("phone", nextPhone, { shouldValidate: true })}
                 helper="Used for trade alerts and payout setup"
                 error={errors.phone?.message}
               />
@@ -209,7 +234,7 @@ export default function RegisterFarmerPage() {
             <PhoneInput
               label="Payout Phone *"
               value={watch("payoutPhone")}
-              onChange={(nextPhone) => setValue("payoutPhone", nextPhone.replace(/\s/g, ""), { shouldValidate: true })}
+              onChange={(nextPhone) => setValue("payoutPhone", nextPhone, { shouldValidate: true })}
               error={errors.payoutPhone?.message}
             />
             <label className="flex items-start gap-3 rounded-[12px] border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-4 text-[13px] text-[#374151]">
@@ -220,7 +245,6 @@ export default function RegisterFarmerPage() {
         ) : null}
 
         {submitState.error ? <p className="rounded-[12px] bg-[#FDECEA] px-4 py-3 text-[12px] text-[#922B21]">{submitState.error}</p> : null}
-        {submitState.success ? <p className="rounded-[12px] bg-[#D4EDDA] px-4 py-3 text-[12px] text-[#1A5C2E]">{submitState.success}</p> : null}
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap gap-3 text-[13px]">
@@ -229,7 +253,7 @@ export default function RegisterFarmerPage() {
                 Back
               </Button>
             ) : null}
-            <button type="button" className="font-medium text-[#6B7280] hover:text-[#1A6B3C]">Continue with Google</button>
+            <span className="font-medium text-[#6B7280]">Phone verification starts after account creation.</span>
           </div>
           <Button type="submit" disabled={!isValid || isSubmitting}>
             {isSubmitting ? "Processing..." : currentStep === steps.length - 1 ? "Create Farmer Account" : "Continue"}

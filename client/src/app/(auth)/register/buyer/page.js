@@ -1,6 +1,7 @@
-﻿"use client";
+"use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card } from "../../../../components/ui/card";
@@ -11,28 +12,32 @@ import { PhoneInput } from "../../../../components/auth/PhoneInput";
 import { PasswordInput } from "../../../../components/auth/PasswordInput";
 import { RoleSwitcher } from "../../../../components/auth/RoleSwitcher";
 import { StepIndicator } from "../../../../components/auth/StepIndicator";
-import { mockAuthRequest } from "../../../../lib/axios";
-import { registerBuyerSchemas } from "../../../../lib/validators";
+import { registerBuyerUnifiedSchema } from "../../../../lib/validators";
+import useAuthStore from "../../../../store/authStore";
 
 const steps = ["Buyer Profile", "Sourcing Preferences"];
 
 export default function RegisterBuyerPage() {
+  const router = useRouter();
+  const { registerBuyer } = useAuthStore();
   const [currentStep, setCurrentStep] = useState(0);
-  const [submitState, setSubmitState] = useState({ error: "", success: "" });
-  const resolver = useMemo(() => zodResolver(registerBuyerSchemas[currentStep]), [currentStep]);
+  const [submitState, setSubmitState] = useState({ error: "" });
+  // Use unified schema to prevent data loss between steps
   const {
     register,
     handleSubmit,
     setValue,
     watch,
+    trigger,
     formState: { errors, isSubmitting, isValid },
   } = useForm({
-    resolver,
+    resolver: zodResolver(registerBuyerUnifiedSchema),
     mode: "onChange",
     defaultValues: {
       buyerType: "local",
       companyName: "",
       contactName: "",
+      country: "Cameroon",
       phone: "",
       email: "",
       password: "",
@@ -44,19 +49,43 @@ export default function RegisterBuyerPage() {
     },
   });
 
+  const validateStep = async (stepNum) => {
+    // Define which fields belong to each step
+    const step0Fields = ["companyName", "contactName", "country", "phone", "email", "password", "confirmPassword"];
+    const step1Fields = ["buyingFocus", "monthlyVolume", "destination", "agreedToPolicy"];
+
+    const fieldsToCheck = [step0Fields, step1Fields][stepNum];
+
+    // Trigger validation only for current step fields
+    const validationResults = await Promise.all(
+      fieldsToCheck.map((field) => trigger(field))
+    );
+
+    return validationResults.every((result) => result === true);
+  };
+
   const submitStep = async (values) => {
-    setSubmitState({ error: "", success: "" });
+    setSubmitState({ error: "" });
+    
+    // Validate current step before proceeding
+    const isStepValid = await validateStep(currentStep, values);
+    if (!isStepValid) {
+      return; // Validation failed, stay on current step
+    }
+    
     if (currentStep < steps.length - 1) {
       setCurrentStep((step) => step + 1);
       return;
     }
 
-    try {
-      await mockAuthRequest(values, { delay: 1000 });
-      setSubmitState({ success: "Buyer registration mocked successfully. Hook up the API when ready.", error: "" });
-    } catch (error) {
-      setSubmitState({ success: "", error: error.message });
+    const result = await registerBuyer(values);
+    if (!result.success) {
+      const detailMessage = result.details?.[0]?.message;
+      setSubmitState({ error: detailMessage || result.error });
+      return;
     }
+
+    router.push("/verify-phone");
   };
 
   return (
@@ -97,16 +126,27 @@ export default function RegisterBuyerPage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <Label>Country *</Label>
+                <Input placeholder="Cameroon" {...register("country")} />
+                {errors.country ? <p className="mt-2 text-[12px] text-[#922B21]">{errors.country.message}</p> : null}
+              </div>
               <PhoneInput
                 label="Phone Number *"
                 value={watch("phone")}
-                onChange={(nextPhone) => setValue("phone", nextPhone.replace(/\s/g, ""), { shouldValidate: true })}
+                onChange={(nextPhone) => setValue("phone", nextPhone, { shouldValidate: true })}
                 error={errors.phone?.message}
               />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <Label>Email Address *</Label>
                 <Input placeholder="buyer@example.com" {...register("email")} />
                 {errors.email ? <p className="mt-2 text-[12px] text-[#922B21]">{errors.email.message}</p> : null}
+              </div>
+              <div className="rounded-[12px] border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-4 text-[13px] leading-6 text-[#374151]">
+                Buyer country is stored separately from destination market so trade and logistics records stay accurate.
               </div>
             </div>
 
@@ -143,7 +183,6 @@ export default function RegisterBuyerPage() {
         ) : null}
 
         {submitState.error ? <p className="rounded-[12px] bg-[#FDECEA] px-4 py-3 text-[12px] text-[#922B21]">{submitState.error}</p> : null}
-        {submitState.success ? <p className="rounded-[12px] bg-[#D4EDDA] px-4 py-3 text-[12px] text-[#1A5C2E]">{submitState.success}</p> : null}
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           {currentStep > 0 ? (

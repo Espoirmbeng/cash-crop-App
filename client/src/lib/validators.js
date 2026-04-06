@@ -1,6 +1,13 @@
 import { z } from "zod";
 
-const cameroonPhone = /^6\d{8}$/;
+const cameroonPhone = /^6[\d\s]{8,11}$/;
+const farmerPhoneValidator = z.string().regex(cameroonPhone, "Enter a valid Cameroon phone number starting with 6.");
+const emailSchema = z.string().email("Enter a valid email address.");
+const emailSchemaOptional = z.string().email("Enter a valid email address.").or(z.literal(""));
+const passwordSchema = z.string()
+  .min(8, "At least 8 characters")
+  .regex(/[A-Z]/, "One uppercase letter")
+  .regex(/\d/, "One number");
 
 export const signInSchema = z.object({
   mode: z.enum(["phone", "email"]),
@@ -16,15 +23,7 @@ export const signInSchema = z.object({
     });
   }
 
-  if (value.mode === "email" && !value.email) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["email"],
-      message: "Enter your email address.",
-    });
-  }
-
-  if (value.mode === "email" && value.email && !z.string().email().safeParse(value.email).success) {
+  if (value.mode === "email" && (!value.email || !emailSchema.safeParse(value.email).success)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["email"],
@@ -46,7 +45,7 @@ export const forgotPasswordSchema = z.object({
     });
   }
 
-  if (value.mode === "email" && (!value.email || !z.string().email().safeParse(value.email).success)) {
+  if (value.mode === "email" && (!value.email || !emailSchema.safeParse(value.email).success)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["email"],
@@ -56,11 +55,8 @@ export const forgotPasswordSchema = z.object({
 });
 
 export const resetPasswordSchema = z.object({
-  code: z.string().min(6, "Enter the reset code."),
-  password: z.string()
-    .min(8, "At least 8 characters")
-    .regex(/[A-Z]/, "One uppercase letter")
-    .regex(/\d/, "One number"),
+  code: z.string().optional(),
+  password: passwordSchema,
   confirmPassword: z.string(),
 }).refine((value) => value.password === value.confirmPassword, {
   path: ["confirmPassword"],
@@ -75,9 +71,9 @@ export const registerFarmerSchemas = [
   z.object({
     firstName: z.string().min(2, "First name is required."),
     lastName: z.string().min(2, "Last name is required."),
-    phone: z.string().regex(cameroonPhone, "Enter a valid Cameroon phone number."),
-    email: z.string().email("Enter a valid email address.").or(z.literal("")),
-    password: z.string().min(8, "Password must be at least 8 characters."),
+    phone: farmerPhoneValidator,
+    email: emailSchemaOptional,
+    password: passwordSchema,
     confirmPassword: z.string().min(8, "Confirm your password."),
     region: z.string().min(2, "Select your region."),
     city: z.string().min(2, "Enter your city or town."),
@@ -96,19 +92,50 @@ export const registerFarmerSchemas = [
   z.object({
     payoutMethod: z.string().min(2, "Choose a payout method."),
     accountName: z.string().min(2, "Enter your account name."),
-    payoutPhone: z.string().regex(cameroonPhone, "Enter a valid payout phone number."),
+    payoutPhone: farmerPhoneValidator,
     notificationOptIn: z.boolean(),
   }),
 ];
+
+// Unified schema for all steps combined - prevents data loss between steps
+export const registerFarmerUnifiedSchema = z.object({
+  // Step 1: Personal (Required on step 1)
+  firstName: z.string().min(2, "First name is required."),
+  lastName: z.string().min(2, "Last name is required."),
+  phone: farmerPhoneValidator,
+  email: emailSchemaOptional,
+  password: passwordSchema,
+  confirmPassword: z.string().min(8, "Confirm your password."),
+  region: z.string().min(2, "Select your region."),
+  city: z.string().min(2, "Enter your city or town."),
+  acceptedTerms: z.boolean().refine(Boolean, "You must accept the terms."),
+  
+  // Step 2: Farm Details (Optional until step 2, then required)
+  primaryCrop: z.string().optional(), // Will be validated when needed
+  harvestVolume: z.string().optional(),
+  cooperative: z.string().optional(),
+  exportReady: z.boolean().optional(),
+  inspectionPreference: z.string().optional(),
+  
+  // Step 3: Payout Setup (Optional until step 3, then required)
+  payoutMethod: z.string().optional(),
+  accountName: z.string().optional(),
+  payoutPhone: z.string().optional(),
+  notificationOptIn: z.boolean().optional(),
+}).refine((value) => value.password === value.confirmPassword, {
+  path: ["confirmPassword"],
+  message: "Passwords do not match.",
+});
 
 export const registerBuyerSchemas = [
   z.object({
     buyerType: z.enum(["local", "international"]),
     companyName: z.string().min(2, "Enter your company or buyer name."),
     contactName: z.string().min(2, "Enter a contact name."),
-    phone: z.string().regex(cameroonPhone, "Enter a valid Cameroon phone number."),
+    country: z.string().min(2, "Enter your country."),
+    phone: farmerPhoneValidator,
     email: z.string().email("Enter a valid email address."),
-    password: z.string().min(8, "Password must be at least 8 characters."),
+    password: passwordSchema,
     confirmPassword: z.string().min(8, "Confirm your password."),
   }).refine((value) => value.password === value.confirmPassword, {
     path: ["confirmPassword"],
@@ -121,3 +148,25 @@ export const registerBuyerSchemas = [
     agreedToPolicy: z.boolean().refine(Boolean, "You must accept the buyer terms."),
   }),
 ];
+
+// Unified schema for buyer registration - prevents data loss between steps
+export const registerBuyerUnifiedSchema = z.object({
+  // Step 1: Buyer Profile (Required on step 1)
+  buyerType: z.enum(["local", "international"]),
+  companyName: z.string().min(2, "Enter your company or buyer name."),
+  contactName: z.string().min(2, "Enter a contact name."),
+  country: z.string().min(2, "Enter your country."),
+  phone: farmerPhoneValidator,
+  email: z.string().email("Enter a valid email address."),
+  password: passwordSchema,
+  confirmPassword: z.string().min(8, "Confirm your password."),
+  
+  // Step 2: Sourcing Preferences (Optional until step 2, then required)
+  buyingFocus: z.string().optional(),
+  monthlyVolume: z.string().optional(),
+  destination: z.string().optional(),
+  agreedToPolicy: z.boolean().optional(),
+}).refine((value) => value.password === value.confirmPassword, {
+  path: ["confirmPassword"],
+  message: "Passwords do not match.",
+});

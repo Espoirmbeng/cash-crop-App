@@ -1,0 +1,35 @@
+$kind: http-request
+method: GET
+url: '{{base_url}}/api/{{api_version}}/listings/search'
+order: 3000
+description: |-
+  ## Search Listings
+  Search listings by keyword, crop type, region, or price range.
+
+  **Authentication:** Optional
+  **Roles:** Any (public)
+
+  ### Query Parameters
+  | Param | Type | Description |
+  |-------|------|-------------|
+  | q | string | Search keyword |
+  | crop | string | Crop name filter |
+  | region | string | Region filter |
+  | minPrice | number | Minimum price |
+  | maxPrice | number | Maximum price |
+  | grade | string | Quality grade (A, B, C) |
+queryParams:
+  - key: q
+    value: cassava
+  - key: region
+    value: South West
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 200', () => pm.response.to.have.status(200));
+
+      pm.test('Response has results array', () => {
+          const json = pm.response.json();
+          pm.expect(json.data).to.be.an('array');
+      });
+    language: text/javascript

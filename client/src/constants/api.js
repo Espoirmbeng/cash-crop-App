@@ -1,1 +1,2 @@
-// AgriculNet — api.js — placeholder
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+export const ADMIN_AUTH_ENDPOINT = `${API_BASE_URL}/x-secure/admin-access/authenticate`;

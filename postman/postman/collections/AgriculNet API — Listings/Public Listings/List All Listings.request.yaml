@@ -1,0 +1,39 @@
+$kind: http-request
+method: GET
+url: '{{base_url}}/api/{{api_version}}/listings'
+order: 1000
+description: |-
+  ## List All Listings
+  Returns all active crop listings. Public endpoint for buyers.
+
+  **Authentication:** Optional
+  **Roles:** Any (public)
+
+  ### Query Parameters
+  | Param | Type | Default | Description |
+  |-------|------|---------|-------------|
+  | page | number | 1 | Page number |
+  | limit | number | 20 | Items per page |
+  | region | string | - | Filter by region |
+  | crop | string | - | Filter by crop name |
+queryParams:
+  - key: page
+    value: '1'
+  - key: limit
+    value: '20'
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 200', () => pm.response.to.have.status(200));
+
+      pm.test('Response structure valid', () => {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property('success');
+          pm.expect(json).to.have.property('data');
+          pm.expect(json).to.have.property('message');
+      });
+
+      pm.test('Response time < 500ms', () => {
+          pm.expect(pm.response.responseTime).to.be.below(500);
+      });
+    language: text/javascript

@@ -1,0 +1,24 @@
+$kind: http-request
+method: GET
+url: '{{base_url}}/api/{{api_version}}/listings/{{listing_id}}'
+order: 2000
+description: |-
+  ## Get Listing by ID
+  Returns a specific listing by its ID for the authenticated farmer.
+
+  **Authentication:** Required (Bearer Token)
+  **Roles:** Farmer (own listings)
+headers:
+  - key: Authorization
+    value: 'Bearer {{access_token}}'
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 200', () => pm.response.to.have.status(200));
+
+      pm.test('Response has listing data', () => {
+          const json = pm.response.json();
+          pm.expect(json.data).to.have.property('id');
+          pm.expect(json.data).to.have.property('cropName');
+      });
+    language: text/javascript

@@ -1,0 +1,13 @@
+$kind: http-request
+method: POST
+url: '{{base_url}}/api/{{api_version}}/auth/verify-phone/send'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "userId": "{{farmer_id}}"
+    }

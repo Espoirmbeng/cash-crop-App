@@ -1,21 +1,33 @@
 require('dotenv').config();
 
+const isProduction = process.env.NODE_ENV === 'production';
 const required = [
   'SUPABASE_URL',
   'SUPABASE_ANON_KEY',
-  'SUPABASE_SERVICE_ROLE_KEY',
   'JWT_ACCESS_SECRET',
-  'JWT_REFRESH_SECRET',
-  'SMTP_USER',
-  'SMTP_PASS',
-  'AT_API_KEY',
-  'AT_USERNAME'
+  'JWT_REFRESH_SECRET'
 ];
+
+if (isProduction) {
+  required.push(
+    'SUPABASE_SERVICE_ROLE_KEY',
+    'SMTP_USER',
+    'SMTP_PASS',
+    'AT_API_KEY',
+    'AT_USERNAME'
+  );
+}
 
 const missing = required.filter(key => !process.env[key]);
 if (missing.length > 0) {
   throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
 }
+
+const allowDevDeliveryFallback = !isProduction && process.env.ALLOW_DEV_DELIVERY_FALLBACK !== 'false';
+const exposeDevAuthHints = !isProduction && process.env.EXPOSE_DEV_AUTH_HINTS !== 'false';
+const supabaseServiceRoleKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  (!isProduction ? process.env.SUPABASE_ANON_KEY : undefined);
 
 module.exports = {
   // Server
@@ -27,7 +39,7 @@ module.exports = {
   // Supabase
   SUPABASE_URL: process.env.SUPABASE_URL,
   SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
-  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  SUPABASE_SERVICE_ROLE_KEY: supabaseServiceRoleKey,
 
   // JWT
   JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET,
@@ -42,13 +54,13 @@ module.exports = {
   SMTP_HOST: process.env.SMTP_HOST || 'smtp.gmail.com',
   SMTP_PORT: parseInt(process.env.SMTP_PORT, 10) || 587,
   SMTP_SECURE: process.env.SMTP_SECURE === 'true',
-  SMTP_USER: process.env.SMTP_USER,
-  SMTP_PASS: process.env.SMTP_PASS,
+  SMTP_USER: process.env.SMTP_USER || '',
+  SMTP_PASS: process.env.SMTP_PASS || '',
   EMAIL_FROM: process.env.EMAIL_FROM || 'AgriculNet <no-reply@agriculnet.cm>',
 
   // SMS
-  AT_API_KEY: process.env.AT_API_KEY,
-  AT_USERNAME: process.env.AT_USERNAME,
+  AT_API_KEY: process.env.AT_API_KEY || '',
+  AT_USERNAME: process.env.AT_USERNAME || '',
   AT_SENDER_ID: process.env.AT_SENDER_ID || 'AgriculNet',
   AT_SANDBOX: process.env.AT_SANDBOX !== 'false',
 
@@ -73,5 +85,9 @@ module.exports = {
   PASSWORD_RESET_URL: process.env.PASSWORD_RESET_URL || 'http://localhost:3000/reset-password',
 
   // Admin
-  ADMIN_ROUTE_SECRET: process.env.ADMIN_ROUTE_SECRET || 'agriculnet-admin-secret-2025'
+  ADMIN_ROUTE_SECRET: process.env.ADMIN_ROUTE_SECRET || 'agriculnet-admin-secret-2025',
+
+  // Development helpers
+  ALLOW_DEV_DELIVERY_FALLBACK: allowDevDeliveryFallback,
+  EXPOSE_DEV_AUTH_HINTS: exposeDevAuthHints
 };

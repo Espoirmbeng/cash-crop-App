@@ -3,6 +3,8 @@ const { CAMEROON_REGIONS, BUYER_TYPES } = require('../../config/constants');
 
 const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 const phonePattern = /^\+237[0-9]{9}$/;
+const optionalEmail = Joi.string().email().allow('', null);
+const acceptedTerms = Joi.boolean().valid(true);
 
 const registerFarmerSchema = Joi.object({
   firstName: Joi.string().min(2).max(100).required(),
@@ -10,7 +12,7 @@ const registerFarmerSchema = Joi.object({
   phone: Joi.string().pattern(phonePattern).required().messages({
     'string.pattern.base': 'Phone must be a valid Cameroon number (+237XXXXXXXXX)'
   }),
-  email: Joi.string().email().optional(),
+  email: optionalEmail.optional(),
   password: Joi.string().min(8).max(128).pattern(passwordPattern).required().messages({
     'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, and one number'
   }),
@@ -19,16 +21,31 @@ const registerFarmerSchema = Joi.object({
   }),
   region: Joi.string().valid(...CAMEROON_REGIONS).required(),
   city: Joi.string().min(2).max(100).required(),
-  farmName: Joi.string().max(200).optional(),
+  primaryCrop: Joi.string().min(2).max(120).optional(),
+  harvestVolume: Joi.string().min(2).max(120).optional(),
+  cooperative: Joi.string().max(200).allow('').optional(),
+  farmName: Joi.string().max(200).allow('').optional(),
   cropsGrown: Joi.array().items(Joi.string()).max(20).optional(),
-  agreeToTerms: Joi.boolean().valid(true).required().messages({
-    'any.only': 'You must agree to the terms and conditions'
-  })
-});
+  exportReady: Joi.boolean().optional(),
+  inspectionPreference: Joi.string().max(200).allow('').optional(),
+  payoutMethod: Joi.string().max(100).allow('').optional(),
+  accountName: Joi.string().max(200).allow('').optional(),
+  payoutPhone: Joi.string().pattern(phonePattern).allow('', null).optional().messages({
+    'string.pattern.base': 'Payout phone must be a valid Cameroon number (+237XXXXXXXXX)'
+  }),
+  notificationOptIn: Joi.boolean().optional(),
+  acceptedTerms: acceptedTerms.optional(),
+  agreeToTerms: acceptedTerms.optional()
+})
+  .or('acceptedTerms', 'agreeToTerms')
+  .messages({
+    'object.missing': 'You must agree to the terms and conditions'
+  });
 
 const registerBuyerSchema = Joi.object({
-  firstName: Joi.string().min(2).max(100).required(),
-  lastName: Joi.string().min(2).max(100).required(),
+  firstName: Joi.string().min(2).max(100).optional(),
+  lastName: Joi.string().min(2).max(100).optional(),
+  contactName: Joi.string().min(2).max(200).optional(),
   phone: Joi.string().pattern(phonePattern).required().messages({
     'string.pattern.base': 'Phone must be a valid Cameroon number (+237XXXXXXXXX)'
   }),
@@ -41,12 +58,26 @@ const registerBuyerSchema = Joi.object({
   }),
   buyerType: Joi.string().valid(...Object.values(BUYER_TYPES)).required(),
   country: Joi.string().min(2).max(100).required(),
-  companyName: Joi.string().max(200).optional(),
+  companyName: Joi.string().max(200).allow('', null).optional(),
   preferredCrops: Joi.array().items(Joi.string()).optional(),
-  agreeToTerms: Joi.boolean().valid(true).required().messages({
-    'any.only': 'You must agree to the terms and conditions'
+  buyingFocus: Joi.string().max(255).allow('', null).optional(),
+  monthlyVolume: Joi.string().max(120).allow('', null).optional(),
+  destination: Joi.string().max(160).allow('', null).optional(),
+  agreedToPolicy: acceptedTerms.optional(),
+  agreeToTerms: acceptedTerms.optional()
+})
+  .custom((value, helpers) => {
+    const hasExplicitName = value.firstName && value.lastName;
+    if (!value.contactName && !hasExplicitName) {
+      return helpers.error('any.custom', { message: 'Provide a contact name or separate first and last names' });
+    }
+    return value;
   })
-});
+  .or('agreedToPolicy', 'agreeToTerms')
+  .messages({
+    'object.missing': 'You must agree to the terms and conditions',
+    'any.custom': '{{#message}}'
+  });
 
 const loginSchema = Joi.object({
   identifier: Joi.string().required(),
@@ -56,7 +87,8 @@ const loginSchema = Joi.object({
 
 const sendOtpSchema = Joi.object({
   phone: Joi.string().pattern(phonePattern).optional(),
-  userId: Joi.string().uuid().optional()
+  userId: Joi.string().uuid().optional(),
+  purpose: Joi.string().optional()
 }).xor('phone', 'userId').messages({
   'object.xor': 'Either phone or userId must be provided'
 });
@@ -74,7 +106,8 @@ const forgotPasswordSchema = Joi.object({
 });
 
 const resetPasswordSchema = Joi.object({
-  userId: Joi.string().uuid().required(),
+  userId: Joi.string().uuid().optional(),
+  identifier: Joi.string().optional(),
   newPassword: Joi.string().min(8).max(128).pattern(passwordPattern).required().messages({
     'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, and one number'
   }),
@@ -83,8 +116,22 @@ const resetPasswordSchema = Joi.object({
   }),
   token: Joi.string().optional(),
   otp: Joi.string().length(6).pattern(/^\d{6}$/).optional()
-}).xor('token', 'otp').messages({
-  'object.xor': 'Either token or otp must be provided'
+}).custom((value, helpers) => {
+  if (!value.token && !value.otp) {
+    return helpers.error('any.custom', {
+      message: 'Either token or otp must be provided'
+    });
+  }
+
+  if (value.otp && !value.userId && !value.identifier) {
+    return helpers.error('any.custom', {
+      message: 'Either userId or identifier must be provided when using otp'
+    });
+  }
+
+  return value;
+}).messages({
+  'any.custom': '{{#message}}'
 });
 
 module.exports = {

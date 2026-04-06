@@ -1,1 +1,0 @@
-// AgriculNet — page.js — placeholder

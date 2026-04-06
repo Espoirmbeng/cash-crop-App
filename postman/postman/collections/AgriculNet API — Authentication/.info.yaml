@@ -1,0 +1,24 @@
+name: 'AgriculNet API — Authentication'
+description: Complete API collection for AgriculNet authentication endpoints
+variables:
+  - key: base_url
+    value: 'http://localhost:5000'
+    type: string
+  - key: api_version
+    value: v1
+    type: string
+  - key: access_token
+    value: ''
+    type: string
+  - key: refresh_token
+    value: ''
+    type: string
+  - key: farmer_id
+    value: ''
+    type: string
+  - key: buyer_id
+    value: ''
+    type: string
+  - key: admin_key
+    value: agriculnet-admin-secret-2025
+    type: string

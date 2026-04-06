@@ -1,0 +1,35 @@
+$kind: http-request
+method: POST
+url: '{{base_url}}/api/{{api_version}}/listings/{{listing_id}}/images'
+order: 1000
+description: |-
+  ## Upload Listing Image
+  Uploads an image for a crop listing.
+
+  **Authentication:** Required (Bearer Token)
+  **Roles:** Farmer (own listings only)
+  **Max Size:** 5MB
+  **Formats:** JPEG, PNG, WebP
+headers:
+  - key: Authorization
+    value: 'Bearer {{access_token}}'
+body:
+  type: formdata
+  content:
+    - key: image
+      type: file
+      src: ''
+      description: 'Crop listing image (JPEG, PNG, WebP, max 5MB)'
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 201 - Created', () => {
+          pm.response.to.have.status(201);
+      });
+
+      pm.test('Response has image ID', () => {
+          const json = pm.response.json();
+          pm.expect(json.data).to.have.property('id');
+          pm.collectionVariables.set('image_id', json.data.id);
+      });
+    language: text/javascript

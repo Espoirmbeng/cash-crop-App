@@ -27,7 +27,7 @@ const panelContent = {
   "/forgot-password": {
     eyebrow: "Recovery",
     title: "Secure access starts with a clean reset flow.",
-    subtitle: "Choose phone or email recovery and we will mock the delivery path until backend services are connected.",
+    subtitle: "Choose phone or email recovery and use development hints locally when delivery providers are not configured.",
   },
   "/reset-password": {
     eyebrow: "Password Reset",
